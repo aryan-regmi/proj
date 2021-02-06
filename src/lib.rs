@@ -1,14 +1,15 @@
-
 /// 2D Position Vector
+#[allow(dead_code)]
 struct Position {
-    x_pos: f64,
-    y_pos: f64,
+    pub x_pos: f64,
+    pub y_pos: f64,
 }
 
 /// 2D Velocity Vector
+#[allow(dead_code)]
 struct Velocity {
-    x_vel: f64,
-    y_vel: f64,
+    pub x_vel: f64,
+    pub y_vel: f64,
 }
 
 struct Ball {
@@ -22,28 +23,36 @@ trait Projectile {
     fn get_cd(&self) -> f64;
     fn get_area(&self) -> f64;
     fn new(mass: f64, cd: f64, area: f64) -> Self;
-
 }
 
 impl Projectile for Ball {
-    fn get_mass(&self) -> f64 {self.mass}
-    fn get_cd(&self) -> f64 {self.cd}
-    fn get_area(&self) -> f64 {self.area}
+    fn get_mass(&self) -> f64 {
+        self.mass
+    }
+    fn get_cd(&self) -> f64 {
+        self.cd
+    }
+    fn get_area(&self) -> f64 {
+        self.area
+    }
     fn new(mass: f64, cd: f64, area: f64) -> Ball {
-        Ball {mass, cd, area}
+        Ball { mass, cd, area }
     }
 }
 
+// TODO: Comment everything well + check docs!
+// TODO: Run clippy
+// TODO: Integration tests (what it looks like from outside)?
+// TODO: Add units (m,kg,s,etc.) to structs (Use rust-measurements crate)
 fn trajectory<T: Projectile>(
-    projectile: &T, 
-    init_pos: Position, 
-    init_vel: Velocity, 
-    rho: f64, 
-    g: f64, 
-    num_iter: usize, 
-    step_size: f64
-) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>) {
-
+    projectile: &T,
+    init_pos: Position,
+    init_vel: Velocity,
+    rho: f64,
+    g: f64,
+    num_iter: usize,
+    step_size: f64,
+) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, usize) {
     // Extract Initial Postions
     let x_curr = init_pos.x_pos;
     let y_curr = init_pos.y_pos;
@@ -55,17 +64,18 @@ fn trajectory<T: Projectile>(
     // Extract Projectile Properties
     let mass = projectile.get_mass();
     let drag_coeff = projectile.get_cd();
-    let area = projectile.get_area(); 
-    
+    let area = projectile.get_area();
+
     // Initialize Return Values (Set initial values)
-    let mut x_vec = vec![0.; num_iter];
+    let mut x_vec = vec![0.; num_iter + 1];
     x_vec[0] = x_curr;
-    let mut y_vec = vec![0.; num_iter];
+    let mut y_vec = vec![0.; num_iter + 1];
     y_vec[0] = y_curr;
-    let mut vx = vec![0.; num_iter];
+    let mut vx = vec![0.; num_iter + 1];
     vx[0] = vx_curr;
-    let mut vy = vec![0.; num_iter];
+    let mut vy = vec![0.; num_iter + 1];
     vy[0] = vy_curr;
+    let mut idx = 0;
 
     for i in 1..=num_iter {
         // Drag Force Calculations
@@ -73,48 +83,75 @@ fn trajectory<T: Projectile>(
         let y_drag = -0.5 * rho * vy_curr * vy_curr * area * drag_coeff * step_size;
 
         // Compute Accelerations
-        let ax = x_drag/mass * step_size;
-        let ay = (-g + (y_drag/mass)) * step_size;
+        let ax = (x_drag / mass) * step_size;
+        let ay = (-g + (y_drag / mass)) * step_size;
 
         // Update Velocities
-        vx[i] = (vx[i-1] + ax) * step_size;
-        vy[i] = (vy[i-1] + ay) * step_size;
+        vx[i] = vx[i - 1] + ax;
+        vy[i] = vy[i - 1] + ay;
 
-        if !(y_vec[i] < 0.0) {
-            // Update Positions
-            x_vec[i] = (x_vec[i-1] + vx[i]) * step_size;
-            y_vec[i] = (y_vec[i-1] + vy[i]) * step_size;
-        }
-        else {
-            break; 
+        // Update Positions
+        x_vec[i] = x_vec[i - 1] + vx[i] * step_size;
+        y_vec[i] = y_vec[i - 1] + vy[i] * step_size;
+
+        if y_vec[i] < 0.0 {
+            idx = i;
+            break;
         }
     }
 
-    (x_vec, y_vec, vx, vy)
+    (x_vec, y_vec, vx, vy, idx)
 }
 
 #[cfg(test)]
 mod test {
-    use speculate::speculate;
     use super::*;
-
+    use speculate::speculate;
 
     speculate! {
-        
+
         describe "Projectile Tests" {
 
             const MASS: f64 = 0.5;
             const CD: f64 = 0.0;
+            const CD2: f64 = 0.5;
             const AREA: f64 = 1.0;
+            const RHO: f64 = 1.225;
+            const G: f64 = 9.8;
+            const N: usize = 3000;
+            const H: f64 = 0.01;
+            const POS: Position = Position {x_pos: 0.0, y_pos: 0.0};
+            const VEL: Velocity = Velocity {x_vel: 10.0, y_vel: 10.0};
+
+            fn round_dec(value: f64,num_digits: f64) -> f64 {
+                (value * 10_f64.powf(num_digits)).round()/(10_f64.powf(num_digits))
+            }
+
+            fn maxVec(v: Vec<f64>) -> f64 {
+                v.iter().cloned().fold(0./0., f64::max)
+            }
 
             before {
-                let ball = Ball::new(MASS, CD, AREA);
+                let _ball = Ball::new(MASS, CD, AREA);
+                let _ball2 = Ball::new(MASS, CD2, AREA);
             }
 
             it "implements Projectile trait" {
-                assert_eq!(ball.get_mass(), MASS);
-                assert_eq!(ball.get_cd(), CD);
-                assert_eq!(ball.get_area(), AREA);
+                assert_eq!(_ball.get_mass(), MASS);
+                assert_eq!(_ball.get_cd(), CD);
+                assert_eq!(_ball.get_area(), AREA);
+            }
+
+            it "calculates correct trajectory" {
+                let (x,y,_,_,idx) = trajectory(&_ball, POS, VEL, RHO, G, N, H);
+                assert_eq!(round_dec(x[idx],1.), 20.4); // Max Range
+                assert_eq!(round_dec(maxVec(y), 1.), 5.1); // Max Height
+            }
+
+            it "can factor in air resistance" {
+                let (x,y,_,_,idx) = trajectory(&_ball2, POS, VEL, RHO, G, N, H);
+                assert_eq!(round_dec(x[idx],1.), 18.1); // Max Range
+                assert_eq!(round_dec(maxVec(y), 1.), 4.8); // Max Height
             }
 
         }
