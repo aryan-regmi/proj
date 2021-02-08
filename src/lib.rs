@@ -1,3 +1,5 @@
+
+
 /// 2D Position Vector
 #[allow(dead_code)]
 struct Position {
@@ -12,6 +14,11 @@ struct Velocity {
     pub y_vel: f64,
 }
 
+/// Defines a Ball projectile
+/// 
+/// Fields:     mass = Mass of ball
+///             cd = Coefficient of Drag for ball
+///             area = Cross-sectional area where aerodynamic forces are acting on
 struct Ball {
     mass: f64,
     cd: f64,
@@ -123,10 +130,23 @@ mod test {
             const POS: Position = Position {x_pos: 0.0, y_pos: 0.0};
             const VEL: Velocity = Velocity {x_vel: 10.0, y_vel: 10.0};
 
+            /// Rounds given value to specified number of digits
+            /// 
+            /// Parameters:     value = Floating point number to round
+            ///                 num_digits = Number of digits to round to (Must be whole number)
+            /// 
+            /// Returns:        Given value with specified number of digits
+            /// 
+            /// *Should only be used to round down the number of digits*
             fn round_dec(value: f64,num_digits: f64) -> f64 {
                 (value * 10_f64.powf(num_digits)).round()/(10_f64.powf(num_digits))
             }
 
+            /// Finds max value of a Vec<f64>
+            /// 
+            /// Parameters:     v = A Vector of f64 values to find the max of
+            /// 
+            /// Returns:        The maximum value in the given vector
             fn maxVec(v: Vec<f64>) -> f64 {
                 v.iter().cloned().fold(0./0., f64::max)
             }
