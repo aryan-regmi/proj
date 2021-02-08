@@ -121,13 +121,15 @@ enum PlotOpts {
     YMin(f64),
     YMax(f64),
     // XLabel(String),
+    // YLabel(String),
 }
 
 // TODO: Add options for axes labels
-fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: [PlotOpts;4]) {
+fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: Vec<PlotOpts>) {
 
     // Default values for axes ranges
     let (mut xmin, mut xmax, mut ymin, mut ymax) = (0.0, 10.0, 0.0, 10.0);
+    let (mut xlabel, mut ylabel) = ("X".to_owned(), "Y".to_owned());
 
     // Read in plot options
     for opt in &opts {
@@ -136,6 +138,8 @@ fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: [PlotOpts;4]) {
             PlotOpts::XMax(val) => { xmax = val }
             PlotOpts::YMin(val) => { ymin = val }
             PlotOpts::YMax(val) => { ymax = val }
+            // PlotOpts::XLabel(val) => { xlabel = val }
+            // PlotOpts::YLabel(val) => { ylabel = val }
         }
     }
 
@@ -143,8 +147,8 @@ fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: [PlotOpts;4]) {
     let mut plot = Plot::new();
     let layout = Layout::new()
         .title(Title::new("Projectile Trajectory"))
-        .x_axis(Axis::new().title(Title::new("X")).range(vec![xmin, xmax]))
-        .y_axis(Axis::new().title(Title::new("Y")).range(vec![ymin, ymax]));
+        .x_axis(Axis::new().title(Title::new(&xlabel[..])).range(vec![xmin, xmax]))
+        .y_axis(Axis::new().title(Title::new(&ylabel[..])).range(vec![ymin, ymax]));
     
     plot.set_layout(layout);
     plot.add_trace(trace);
@@ -155,6 +159,7 @@ fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: [PlotOpts;4]) {
 mod test {
     use super::*;
     use speculate::speculate;
+    use super::PlotOpts::{XMin, XMax, YMin, YMax};
 
     speculate! {
 
@@ -205,7 +210,7 @@ mod test {
 
             it "calculates correct trajectory" {
                 let (x,y,_,_,idx) = trajectory(&_ball, POS, VEL, RHO, G, N, H);
-                plot_traj(x.clone(), y.clone());
+                plot_traj(x.clone(), y.clone(), vec![XMax(20.6), YMax(6.0)]);
                 assert_eq!(round_dec(x[idx],1.), 20.4); // Max Range
                 assert_eq!(round_dec(maxVec(y), 1.), 5.1); // Max Height
             }
