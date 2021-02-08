@@ -120,8 +120,8 @@ enum PlotOpts {
     XMax(f64),
     YMin(f64),
     YMax(f64),
-    // XLabel(String),
-    // YLabel(String),
+    XLabel(String),
+    YLabel(String),
 }
 
 // TODO: Add options for axes labels
@@ -132,14 +132,14 @@ fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: Vec<PlotOpts>) {
     let (mut xlabel, mut ylabel) = ("X".to_owned(), "Y".to_owned());
 
     // Read in plot options
-    for opt in &opts {
-        match *opt {
+    for opt in opts {
+        match opt {
             PlotOpts::XMin(val) => { xmin = val }
             PlotOpts::XMax(val) => { xmax = val }
             PlotOpts::YMin(val) => { ymin = val }
             PlotOpts::YMax(val) => { ymax = val }
-            // PlotOpts::XLabel(val) => { xlabel = val }
-            // PlotOpts::YLabel(val) => { ylabel = val }
+            PlotOpts::XLabel(val) => { xlabel = val }
+            PlotOpts::YLabel(val) => { ylabel = val }
         }
     }
 
@@ -159,7 +159,7 @@ fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: Vec<PlotOpts>) {
 mod test {
     use super::*;
     use speculate::speculate;
-    use super::PlotOpts::{XMin, XMax, YMin, YMax};
+    use super::PlotOpts::{XMin, XMax, YMin, YMax, XLabel, YLabel};
 
     speculate! {
 
@@ -210,7 +210,7 @@ mod test {
 
             it "calculates correct trajectory" {
                 let (x,y,_,_,idx) = trajectory(&_ball, POS, VEL, RHO, G, N, H);
-                plot_traj(x.clone(), y.clone(), vec![XMax(20.6), YMax(6.0)]);
+                plot_traj(x.clone(), y.clone(), vec![XMax(20.6), YMax(6.0), XLabel("TST".to_owned())]);
                 assert_eq!(round_dec(x[idx],1.), 20.4); // Max Range
                 assert_eq!(round_dec(maxVec(y), 1.), 5.1); // Max Height
             }
