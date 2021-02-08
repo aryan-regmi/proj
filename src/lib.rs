@@ -19,7 +19,7 @@ struct Velocity {
     pub y_vel: f64,
 }
 
-/// Defines a Ball projectile
+/// Defines a Symmetric projectile
 /// 
 /// Fields:     mass = Mass of ball
 ///             cd = Coefficient of Drag for ball
@@ -28,6 +28,18 @@ struct Ball {
     mass: f64,
     cd: f64,
     area: f64,
+}
+
+/// Defines an Asymmetric projectile
+/// 
+/// Fields:     mass = Mass of ball
+///             cd = Coefficient of Drag for ball (x and y directions)
+///             area = Cross-sectional area (x and y directions)
+
+struct AsymProj {
+    mass: f64,
+    cd: (f64, f64),
+    area: (f64, f64)
 }
 
 trait Projectile {
