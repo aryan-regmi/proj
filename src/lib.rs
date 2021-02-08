@@ -1,3 +1,8 @@
+use plotly::common::{
+    ColorScale, ColorScalePalette, DashType, Fill, Font, Line, LineShape, Marker, Mode, Title,
+};
+use plotly::layout::{Axis, BarMode, Layout, Legend, TicksDirection};
+use plotly::{Bar, NamedColor, Plot, Rgb, Rgba, Scatter};
 
 
 /// 2D Position Vector
@@ -110,6 +115,42 @@ fn trajectory<T: Projectile>(
     (x_vec, y_vec, vx, vy, idx)
 }
 
+enum PlotOpts {
+    XMin(f64),
+    XMax(f64),
+    YMin(f64),
+    YMax(f64),
+    // XLabel(String),
+}
+
+// TODO: Add options for axes labels
+fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: [PlotOpts;4]) {
+
+    // Default values for axes ranges
+    let (mut xmin, mut xmax, mut ymin, mut ymax) = (0.0, 10.0, 0.0, 10.0);
+
+    // Read in plot options
+    for opt in &opts {
+        match *opt {
+            PlotOpts::XMin(val) => { xmin = val }
+            PlotOpts::XMax(val) => { xmax = val }
+            PlotOpts::YMin(val) => { ymin = val }
+            PlotOpts::YMax(val) => { ymax = val }
+        }
+    }
+
+    let trace = Scatter::new(xvec, yvec);
+    let mut plot = Plot::new();
+    let layout = Layout::new()
+        .title(Title::new("Projectile Trajectory"))
+        .x_axis(Axis::new().title(Title::new("X")).range(vec![xmin, xmax]))
+        .y_axis(Axis::new().title(Title::new("Y")).range(vec![ymin, ymax]));
+    
+    plot.set_layout(layout);
+    plot.add_trace(trace);
+    plot.show();
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -164,6 +205,7 @@ mod test {
 
             it "calculates correct trajectory" {
                 let (x,y,_,_,idx) = trajectory(&_ball, POS, VEL, RHO, G, N, H);
+                plot_traj(x.clone(), y.clone());
                 assert_eq!(round_dec(x[idx],1.), 20.4); // Max Range
                 assert_eq!(round_dec(maxVec(y), 1.), 5.1); // Max Height
             }
