@@ -4,6 +4,9 @@ use plotly::common::{
 use plotly::layout::{Axis, BarMode, Layout, Legend, TicksDirection};
 use plotly::{Bar, NamedColor, Plot, Rgb, Rgba, Scatter};
 
+// TODO: Rewrite doc comments to look better on cargo docs
+// TODO: Add wind + subplots to show wind displacement
+
 /// 2D Position Vector
 #[allow(dead_code)]
 pub struct Position {
@@ -17,8 +20,6 @@ pub struct Velocity {
     pub x_vel: f64,
     pub y_vel: f64,
 }
-
-// TODO: rewrite doc comments to look better on cargo docs
 
 /// Defines a Symmetric projectile
 ///
@@ -117,7 +118,6 @@ pub trait Projectile {
         (x_vec, y_vec, vx, vy, idx)
     }
 
-    // TODO: Add options for axes labels
     fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: Vec<PlotOpts>) {
         // Default values for plot options
         let (mut xmin, mut xmax, mut ymin, mut ymax) = (0.0, 10.0, 0.0, 10.0);
@@ -193,12 +193,6 @@ impl Projectile for AsymProj {
     }
 }
 
-// TODO: Comment everything well + check docs!
-// TODO: Run clippy
-// TODO: Integration tests (what it looks like from outside)?
-// TODO: Add units (m,kg,s,etc.) to structs (Use rust-measurements crate)
-
-
 pub enum PlotOpts {
     XMin(f64),
     XMax(f64),
@@ -210,7 +204,9 @@ pub enum PlotOpts {
     LineSize(f64),
 }
 
+
 // TODO: Write tests for AsymProj
+// TODO: Integration tests (what it looks like from outside)?
 #[cfg(test)]
 mod test {
     use super::PlotOpts::*;
