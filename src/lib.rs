@@ -9,16 +9,23 @@ use plotly::{Bar, NamedColor, Plot, Rgb, Rgba, Scatter};
 
 // TODO: Add wind + subplots to show wind displacement
 
-/// Converts wind vector to NS(north-south) and EW(east-west) components
-fn wind(wind_mag: f64, wind_dir: Degrees) -> (Wind, Wind) {
-    let mut direction = wind_dir.0;
-    if direction > 360.0 {
-        direction = direction % 360.0;
+
+struct Wind {
+    pub magnitude: f64,
+    pub direction: Degrees,
+}
+impl Wind {
+    /// Converts wind vector to NS(north-south) and EW(east-west) components
+    fn to_comp(&self) -> (WindComp, WindComp) {
+        let mut wind_dir = self.direction.0;
+        if wind_dir > 360.0 {
+            wind_dir = wind_dir % 360.0;
+        }
+        let north_south = -self.magnitude * wind_dir.to_radians().sin();
+        let east_west = -self.magnitude * wind_dir.to_radians().cos(); 
+        
+        (WindComp::NS(north_south), WindComp::EW(east_west))        
     }
-    let north_south = -wind_mag * direction.to_radians().sin();
-    let east_west = -wind_mag * direction.to_radians().cos(); 
-    
-    (Wind::NS(north_south), Wind::EW(east_west))
 }
 
 // North = +Y axis
@@ -26,7 +33,7 @@ fn wind(wind_mag: f64, wind_dir: Degrees) -> (Wind, Wind) {
 // East = +X axis
 // West = -X axis
 #[derive(Debug, PartialEq)]
-enum Wind {
+enum WindComp {
     NS(f64), // North-South direction (Y axis)wnd
     EW(f64), // East-West direction (X axis)
 }
@@ -118,6 +125,8 @@ pub trait Projectile {
         let mass = projectile.get_mass();
         let (cd_x, cd_y) = projectile.get_cd();
         let (area_x, area_y) = projectile.get_area();
+
+        // Extract Wind Data
     
         // Initialize Return Values (Set initial values)
         let mut x_vec = vec![0.; num_iter + 1];
@@ -318,17 +327,17 @@ mod test {
             }
 
             it "can convert wind values to components" {
-                let wnd = wind(10., Degrees(765.));
-                let (mut ns, mut ew) = (wnd.0, wnd.1);
+                let wind = Wind { magnitude: 10.0, direction: Degrees(765.0)};
+                let (mut ns, mut ew) = wind.to_comp();
                 match ns {
-                    Wind::NS(val) => { ns = Wind::NS(round_dec(val,2.)) }
-                    Wind::EW(_) => { eprintln!("ERROR: ns should not be Wind::EW") }
+                    WindComp::NS(val) => { ns = WindComp::NS(round_dec(val,2.)) }
+                    WindComp::EW(_) => { eprintln!("ERROR: ns should not be Wind::EW") }
                 }
                 match ew {
-                    Wind::EW(val) => { ew = Wind::EW(round_dec(val,2.)) }
-                    Wind::NS(_) => { eprintln!("ERROR: ew should not be Wind::NS") }
+                    WindComp::EW(val) => { ew = WindComp::EW(round_dec(val,2.)) }
+                    WindComp::NS(_) => { eprintln!("ERROR: ew should not be Wind::NS") }
                 }
-                assert_eq!((ns, ew), (Wind::NS(-7.07), Wind::EW(-7.07)));
+                assert_eq!((ns, ew), (WindComp::NS(-7.07), WindComp::EW(-7.07)));
             }
         }
 
