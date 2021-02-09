@@ -30,6 +30,11 @@ pub struct Ball {
     cd: f64,
     area: f64,
 }
+impl Ball {
+    fn new(mass: f64, cd: f64, area: f64) -> Self {
+        Ball {mass, cd, area}
+    }
+}
 
 /// Defines an Asymmetric projectile
 ///
@@ -41,12 +46,17 @@ pub struct AsymProj {
     cd: (f64, f64),
     area: (f64, f64),
 }
+impl AsymProj {
+    fn new(mass: f64, cd: (f64,f64), area: (f64,f64)) -> Self {
+        AsymProj {mass, cd, area}
+    }
+}
 
 pub trait Projectile {
     fn get_mass(&self) -> f64;
-    fn get_cd(&self) -> f64;
-    fn get_area(&self) -> f64;
-    fn new(mass: f64, cd: f64, area: f64) -> Self;
+    fn is_symmetric(&self) -> bool;
+    fn get_cd(&self) -> (f64, f64);
+    fn get_area(&self) -> (f64, f64);
 
     fn trajectory<T: Projectile>(
         projectile: &T,
@@ -67,8 +77,8 @@ pub trait Projectile {
     
         // Extract Projectile Properties
         let mass = projectile.get_mass();
-        let drag_coeff = projectile.get_cd();
-        let area = projectile.get_area();
+        let (cd_x, cd_y) = projectile.get_cd();
+        let (area_x, area_y) = projectile.get_area();
     
         // Initialize Return Values (Set initial values)
         let mut x_vec = vec![0.; num_iter + 1];
@@ -83,8 +93,8 @@ pub trait Projectile {
     
         for i in 1..=num_iter {
             // Drag Force Calculations
-            let x_drag = -0.5 * rho * vx_curr * vx_curr * area * drag_coeff * step_size;
-            let y_drag = -0.5 * rho * vy_curr * vy_curr * area * drag_coeff * step_size;
+            let x_drag = -0.5 * rho * vx_curr * vx_curr * area_x * cd_x * step_size;
+            let y_drag = -0.5 * rho * vy_curr * vy_curr * area_y * cd_y * step_size;
     
             // Compute Accelerations
             let ax = (x_drag / mass) * step_size;
@@ -109,61 +119,77 @@ pub trait Projectile {
 
     // TODO: Add options for axes labels
     fn plot_traj(xvec: Vec<f64>, yvec: Vec<f64>, opts: Vec<PlotOpts>) {
-    // Default values for plot options
-    let (mut xmin, mut xmax, mut ymin, mut ymax) = (0.0, 10.0, 0.0, 10.0);
-    let (mut xlabel, mut ylabel) = ("X".to_owned(), "Y".to_owned());
-    let mut line_color = NamedColor::Red;
-    let mut line_size = 1.5;
+        // Default values for plot options
+        let (mut xmin, mut xmax, mut ymin, mut ymax) = (0.0, 10.0, 0.0, 10.0);
+        let (mut xlabel, mut ylabel) = ("X".to_owned(), "Y".to_owned());
+        let mut line_color = NamedColor::Red;
+        let mut line_size = 1.5;
 
-    // Read in plot options
-    for opt in opts {
-        match opt {
-            PlotOpts::XMin(val) => xmin = val,
-            PlotOpts::XMax(val) => xmax = val,
-            PlotOpts::YMin(val) => ymin = val,
-            PlotOpts::YMax(val) => ymax = val,
-            PlotOpts::XLabel(val) => xlabel = val,
-            PlotOpts::YLabel(val) => ylabel = val,
-            PlotOpts::LineColor(val) => line_color = val,
-            PlotOpts::LineSize(val) => line_size = val,
+        // Read in plot options
+        for opt in opts {
+            match opt {
+                PlotOpts::XMin(val) => xmin = val,
+                PlotOpts::XMax(val) => xmax = val,
+                PlotOpts::YMin(val) => ymin = val,
+                PlotOpts::YMax(val) => ymax = val,
+                PlotOpts::XLabel(val) => xlabel = val,
+                PlotOpts::YLabel(val) => ylabel = val,
+                PlotOpts::LineColor(val) => line_color = val,
+                PlotOpts::LineSize(val) => line_size = val,
+            }
         }
-    }
 
-    let trace = Scatter::new(xvec, yvec)
-        .mode(Mode::Lines)
-        .line(Line::new().color(line_color).width(line_size));
-    let mut plot = Plot::new();
-    let layout = Layout::new()
-        .title(Title::new("Projectile Trajectory"))
-        .x_axis(
-            Axis::new()
-                .title(Title::new(&xlabel[..]))
-                .range(vec![xmin, xmax]),
-        )
-        .y_axis(
-            Axis::new()
-                .title(Title::new(&ylabel[..]))
-                .range(vec![ymin, ymax]),
-        );
+        let trace = Scatter::new(xvec, yvec)
+            .mode(Mode::Lines)
+            .line(Line::new().color(line_color).width(line_size));
+        let mut plot = Plot::new();
+        let layout = Layout::new()
+            .title(Title::new("Projectile Trajectory"))
+            .x_axis(
+                Axis::new()
+                    .title(Title::new(&xlabel[..]))
+                    .range(vec![xmin, xmax]),
+            )
+            .y_axis(
+                Axis::new()
+                    .title(Title::new(&ylabel[..]))
+                    .range(vec![ymin, ymax]),
+            );
 
-    plot.set_layout(layout);
-    plot.add_trace(trace);
-    plot.show();
+        plot.set_layout(layout);
+        plot.add_trace(trace);
+        plot.show();
     } 
+
 }
 
 impl Projectile for Ball {
     fn get_mass(&self) -> f64 {
         self.mass
     }
-    fn get_cd(&self) -> f64 {
+    fn is_symmetric(&self) -> bool {
+        true
+    }
+    fn get_cd(&self) -> (f64, f64) {
+        (self.cd, self.cd)
+    }
+    fn get_area(&self) -> (f64, f64) {
+        (self.area, self.area)
+    }
+}
+
+impl Projectile for AsymProj {
+    fn get_mass(&self) -> f64 {
+        self.mass
+    }
+    fn is_symmetric(&self) -> bool {
+        false
+    }
+    fn get_cd(&self) -> (f64, f64) {
         self.cd
     }
-    fn get_area(&self) -> f64 {
+    fn get_area(&self) -> (f64, f64) {
         self.area
-    }
-    fn new(mass: f64, cd: f64, area: f64) -> Ball {
-        Ball { mass, cd, area }
     }
 }
 
@@ -184,7 +210,7 @@ pub enum PlotOpts {
     LineSize(f64),
 }
 
-
+// TODO: Write tests for AsymProj
 #[cfg(test)]
 mod test {
     use super::PlotOpts::*;
@@ -234,8 +260,8 @@ mod test {
 
             it "implements Projectile trait" {
                 assert_eq!(_ball.get_mass(), MASS);
-                assert_eq!(_ball.get_cd(), CD);
-                assert_eq!(_ball.get_area(), AREA);
+                assert_eq!(_ball.get_cd().0, CD);
+                assert_eq!(_ball.get_area().0, AREA);
             }
 
             it "calculates correct trajectory" {
