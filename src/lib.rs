@@ -5,7 +5,47 @@ use plotly::layout::{Axis, BarMode, Layout, Legend, TicksDirection};
 use plotly::{Bar, NamedColor, Plot, Rgb, Rgba, Scatter};
 
 // TODO: Rewrite doc comments to look better on cargo docs
+
+
 // TODO: Add wind + subplots to show wind displacement
+
+/// Converts wind vector to NS(north-south) and EW(east-west) components
+fn wind(wind_mag: f64, wind_dir: Degrees) -> (Wind, Wind) {
+    let mut direction = wind_dir.0;
+    if direction > 360.0 {
+        direction = direction % 360.0;
+    }
+    let north_south = wind_mag * direction.to_radians().sin();
+    let east_west = wind_mag * direction.to_radians().cos(); 
+
+    println!("{}", direction);
+    
+    (Wind::NS(north_south), Wind::EW(east_west))
+}
+
+// North = +Y axis
+// South = -Y axis
+// East = +X axis
+// West = -X axis
+#[derive(Debug, PartialEq)]
+enum Wind {
+    NS(f64), // North-South direction (Y axis)
+    EW(f64), // East-West direction (X axis)
+}
+
+struct Degrees(f64);
+impl Degrees {
+    fn to_rad(&self) -> Radians {
+        Radians(self.0.to_radians())
+    }
+}
+
+struct Radians(f64);
+impl Radians {
+    fn to_deg(&self) -> Degrees {
+        Degrees(self.0.to_degrees())
+    }
+}
 
 /// 2D Position Vector
 #[allow(dead_code)]
@@ -279,6 +319,19 @@ mod test {
                 assert_eq!(round_dec(maxVec(y), 1.), 4.8); // Max Height
             }
 
+            it "can convert wind values to components" {
+                let wnd = wind(10., Degrees(765.));
+                let (mut ns, mut ew) = (wnd.0, wnd.1);
+                match ns {
+                    Wind::NS(val) => { ns = Wind::NS(round_dec(val,2.)) }
+                    Wind::EW(_) => { eprintln!("ERROR: ns should not be Wind::EW") }
+                }
+                match ew {
+                    Wind::EW(val) => { ew = Wind::EW(round_dec(val,2.)) }
+                    Wind::NS(_) => { eprintln!("ERROR: ew should not be Wind::NS") }
+                }
+                assert_eq!((ns, ew), (Wind::NS(7.07), Wind::EW(7.07)));
+            }
         }
 
     }
