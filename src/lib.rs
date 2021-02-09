@@ -6,11 +6,8 @@ use plotly::{Bar, NamedColor, Plot, Rgb, Rgba, Scatter};
 
 // TODO: Rewrite doc comments to look better on cargo docs
 
-
 // TODO: Add wind + subplots to show wind displacement
-
-
-struct Wind {
+pub struct Wind {
     pub magnitude: f64,
     pub direction: Degrees,
 }
@@ -23,6 +20,8 @@ impl Wind {
         }
         let north_south = -self.magnitude * wind_dir.to_radians().sin();
         let east_west = -self.magnitude * wind_dir.to_radians().cos(); 
+
+        // TODO: change values to correctly set direction of wind
         
         (WindComp::NS(north_south), WindComp::EW(east_west))        
     }
@@ -38,14 +37,14 @@ enum WindComp {
     EW(f64), // East-West direction (X axis)
 }
 
-struct Degrees(f64);
+pub struct Degrees(f64);
 impl Degrees {
     fn to_rad(&self) -> Radians {
         Radians(self.0.to_radians())
     }
 }
 
-struct Radians(f64);
+pub struct Radians(f64);
 impl Radians {
     fn to_deg(&self) -> Degrees {
         Degrees(self.0.to_degrees())
@@ -112,6 +111,7 @@ pub trait Projectile {
         g: f64,
         num_iter: usize,
         step_size: f64,
+        windspeed: Wind,
     ) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, usize) {
         // Extract Initial Postions
         let x_curr = init_pos.x_pos;
@@ -127,7 +127,20 @@ pub trait Projectile {
         let (area_x, area_y) = projectile.get_area();
 
         // Extract Wind Data
-    
+        let (wind_y, wind_x) = windspeed.to_comp();
+        let wx = {
+            match wind_x {
+                WindComp::EW(val) => val,
+                WindComp::NS(_) => panic!("ERROR: wind_x can't be WindComp::NS()")
+            }
+        };
+        let wy = {
+            match wind_y {
+                WindComp::NS(val) => val,
+                WindComp::EW(_) => panic!("ERROR: wind_y can't be WindComp::EW()")
+            }
+        };
+
         // Initialize Return Values (Set initial values)
         let mut x_vec = vec![0.; num_iter + 1];
         x_vec[0] = x_curr;
@@ -143,10 +156,14 @@ pub trait Projectile {
             // Drag Force Calculations
             let x_drag = -0.5 * rho * vx_curr * vx_curr * area_x * cd_x * step_size;
             let y_drag = -0.5 * rho * vy_curr * vy_curr * area_y * cd_y * step_size;
-    
+            
+            // Wind Force Calculations
+            let x_wind = -0.5 * rho * wx * wx * area_x * cd_x * step_size;
+            let y_wind = -0.5 * rho * wy * wy * area_y * cd_y * step_size;
+
             // Compute Accelerations
-            let ax = (x_drag / mass) * step_size;
-            let ay = (-g + (y_drag / mass)) * step_size;
+            let ax = ((x_drag / mass) + (x_wind / mass)) * step_size;
+            let ay = (-g + (y_drag / mass) + (y_wind / mass)) * step_size;
     
             // Update Velocities
             vx[i] = vx[i - 1] + ax;
@@ -274,6 +291,8 @@ mod test {
             const H: f64 = 0.01;
             const POS: Position = Position {x_pos: 0.0, y_pos: 0.0};
             const VEL: Velocity = Velocity {x_vel: 10.0, y_vel: 10.0};
+            const WIND: Wind = Wind {magnitude: 0.0, direction: Degrees(0.0)};
+            const WIND2: Wind = Wind {magnitude: 10.0, direction: Degrees(0.0)};
 
             /// Rounds given value to specified number of digits
             ///
@@ -308,7 +327,7 @@ mod test {
             }
 
             it "calculates correct trajectory" {
-                let (x,y,_,_,idx) = Ball::trajectory(&_ball, POS, VEL, RHO, G, N, H);
+                let (x,y,_,_,idx) = Ball::trajectory(&_ball, POS, VEL, RHO, G, N, H, WIND);
                 // Ball::plot_traj(x.clone(), y.clone(), vec![
                 //     XMax(20.6),
                 //     YMax(6.0),
@@ -321,7 +340,7 @@ mod test {
             }
 
             it "can factor in air resistance" {
-                let (x,y,_,_,idx) = Ball::trajectory(&_ball2, POS, VEL, RHO, G, N, H);
+                let (x,y,_,_,idx) = Ball::trajectory(&_ball2, POS, VEL, RHO, G, N, H, WIND);
                 assert_eq!(round_dec(x[idx],1.), 18.1); // Max Range
                 assert_eq!(round_dec(maxVec(y), 1.), 4.8); // Max Height
             }
@@ -338,6 +357,12 @@ mod test {
                     WindComp::NS(_) => { eprintln!("ERROR: ew should not be Wind::NS") }
                 }
                 assert_eq!((ns, ew), (WindComp::NS(-7.07), WindComp::EW(-7.07)));
+            }
+
+            it "can factor in wind" {
+                let (x,y,_,_,idx) = Ball::trajectory(&_ball2, POS, VEL, RHO, G, N, H, WIND2);
+                assert_eq!(round_dec(x[idx],1.), 16.9); // Max Range
+                assert_eq!(round_dec(maxVec(y), 1.), 4.8); // Max Height
             }
         }
 
