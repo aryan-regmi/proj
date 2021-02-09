@@ -15,10 +15,8 @@ fn wind(wind_mag: f64, wind_dir: Degrees) -> (Wind, Wind) {
     if direction > 360.0 {
         direction = direction % 360.0;
     }
-    let north_south = wind_mag * direction.to_radians().sin();
-    let east_west = wind_mag * direction.to_radians().cos(); 
-
-    println!("{}", direction);
+    let north_south = -wind_mag * direction.to_radians().sin();
+    let east_west = -wind_mag * direction.to_radians().cos(); 
     
     (Wind::NS(north_south), Wind::EW(east_west))
 }
@@ -29,7 +27,7 @@ fn wind(wind_mag: f64, wind_dir: Degrees) -> (Wind, Wind) {
 // West = -X axis
 #[derive(Debug, PartialEq)]
 enum Wind {
-    NS(f64), // North-South direction (Y axis)
+    NS(f64), // North-South direction (Y axis)wnd
     EW(f64), // East-West direction (X axis)
 }
 
@@ -302,13 +300,13 @@ mod test {
 
             it "calculates correct trajectory" {
                 let (x,y,_,_,idx) = Ball::trajectory(&_ball, POS, VEL, RHO, G, N, H);
-                Ball::plot_traj(x.clone(), y.clone(), vec![
-                    XMax(20.6),
-                    YMax(6.0),
-                    XLabel("TST".to_owned()),
-                    LineColor(NamedColor::SeaGreen),
-                    LineSize(3.0),
-                ]);
+                // Ball::plot_traj(x.clone(), y.clone(), vec![
+                //     XMax(20.6),
+                //     YMax(6.0),
+                //     XLabel("TST".to_owned()),
+                //     LineColor(NamedColor::SeaGreen),
+                //     LineSize(3.0),
+                // ]);
                 assert_eq!(round_dec(x[idx],1.), 20.4); // Max Range
                 assert_eq!(round_dec(maxVec(y), 1.), 5.1); // Max Height
             }
@@ -330,7 +328,7 @@ mod test {
                     Wind::EW(val) => { ew = Wind::EW(round_dec(val,2.)) }
                     Wind::NS(_) => { eprintln!("ERROR: ew should not be Wind::NS") }
                 }
-                assert_eq!((ns, ew), (Wind::NS(7.07), Wind::EW(7.07)));
+                assert_eq!((ns, ew), (Wind::NS(-7.07), Wind::EW(-7.07)));
             }
         }
 
