@@ -222,7 +222,8 @@ pub trait Projectile {
 
         plot.set_layout(layout);
         plot.add_trace(trace);
-        plot.show();
+        //plot.show();
+        plot.show_png(1280, 900);
     } 
 
 }
@@ -328,13 +329,13 @@ mod test {
 
             it "calculates correct trajectory" {
                 let (x,y,_,_,idx) = Ball::trajectory(&_ball, POS, VEL, RHO, G, N, H, WIND);
-                // Ball::plot_traj(x.clone(), y.clone(), vec![
-                //     XMax(20.6),
-                //     YMax(6.0),
-                //     XLabel("TST".to_owned()),
-                //     LineColor(NamedColor::SeaGreen),
-                //     LineSize(3.0),
-                // ]);
+                Ball::plot_traj(x.clone(), y.clone(), vec![
+                     XMax(20.6),
+                     YMax(6.0),
+                     XLabel("TST".to_owned()),
+                     LineColor(NamedColor::SeaGreen),
+                     LineSize(3.0),
+                 ]);
                 assert_eq!(round_dec(x[idx],1.), 20.4); // Max Range
                 assert_eq!(round_dec(maxVec(y), 1.), 5.1); // Max Height
             }
