@@ -3,6 +3,7 @@ use plotly::common::{
 };
 use plotly::layout::{Axis, BarMode, Layout, Legend, TicksDirection};
 use plotly::{Bar, NamedColor, Plot, Rgb, Rgba, Scatter};
+use super::helpers;
 
 // TODO: Rewrite doc comments to look better on cargo docs
 
@@ -67,9 +68,10 @@ pub struct Velocity {
 
 /// Defines a Symmetric projectile
 ///
-/// Fields:     mass = Mass of ball
-///             cd = Coefficient of Drag for ball
-///             area = Cross-sectional area where aerodynamic forces are acting on
+/// =============FIELDS=============
+/// mass = Mass of ball
+/// cd = Coefficient of Drag for ball
+/// area = Cross-sectional area where aerodynamic forces are acting on
 pub struct Ball {
     mass: f64,
     cd: f64,
@@ -83,9 +85,10 @@ impl Ball {
 
 /// Defines an Asymmetric projectile
 ///
-/// Fields:     mass = Mass of ball
-///             cd = Coefficient of Drag for ball (x and y directions)
-///             area = Cross-sectional area (x and y directions)
+/// =============FIELDS=============
+/// mass = Mass of ball
+/// cd = Coefficient of Drag for ball (x and y directions)
+/// area = Cross-sectional area (x and y directions)
 pub struct AsymProj {
     mass: f64,
     cd: (f64, f64),
@@ -296,25 +299,29 @@ mod test {
             const WIND2: Wind = Wind {magnitude: 10.0, direction: Degrees(0.0)};
 
             /// Rounds given value to specified number of digits
+            /// 
+            /// =============PARAMETERS===========
+            /// value = Floating point number to round
+            /// num_digits = Number of digits to round to (Must be whole number)
             ///
-            /// Parameters:     value = Floating point number to round
-            ///                 num_digits = Number of digits to round to (Must be whole number)
-            ///
-            /// Returns:        Given value with specified number of digits
+            /// ==============RETURNS==============
+            /// Given value with specified number of digits
             ///
             /// *Should only be used to round down the number of digits*
-            fn round_dec(value: f64,num_digits: f64) -> f64 {
-                (value * 10_f64.powf(num_digits)).round()/(10_f64.powf(num_digits))
-            }
+            //fn round_dec(value: f64,num_digits: f64) -> f64 {
+                //(value * 10_f64.powf(num_digits)).round()/(10_f64.powf(num_digits))
+                //}
 
             /// Finds max value of a Vec<f64>
             ///
-            /// Parameters:     v = A Vector of f64 values to find the max of
+            /// =============PARAMETERS===========
+            /// v = A Vector of f64 values to find the max of
             ///
-            /// Returns:        The maximum value in the given vector
-            fn maxVec(v: Vec<f64>) -> f64 {
-                v.iter().cloned().fold(0./0., f64::max)
-            }
+            /// ==============RETURNS==============
+            /// The maximum value in the given vector
+            //fn maxVec(v: Vec<f64>) -> f64 {
+                //v.iter().cloned().fold(0./0., f64::max)
+            //}
 
             before {
                 let _ball = Ball::new(MASS, CD, AREA);
